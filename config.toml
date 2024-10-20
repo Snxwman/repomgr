@@ -1,0 +1,78 @@
+# Expected tables
+#     - base
+#     - users (todo)
+#     - repos
+#         - <groups>
+#     - <repo urls>
+
+# App wide, base config. Can be overriden later
+[base]
+base_path = "~/repomgr"
+# Final format will be "{base_path}/{path_format}/"
+# Permitted Values:
+#     {subdomain}
+#     {domain}
+#     {tld}
+#     {host}      - The domain name of the url including subdomains and tld.
+#     {ownder}    - The owner of the repo (defined as the second to last path component of the full url).
+#     {repo}      - The name of the repo (defines as the last path component of the full url, with out ".git").
+#     `text`      - Raw text will be used exactly.
+repo_path_format = "{host}/{owner}/{repo}"
+update_interval = "45m"
+
+git_bin = "/usr/bin/git"
+background_fetch = true
+background_pull = true
+stash_to_pull = false
+
+nerdfonts = true
+
+# List of repos to manage
+[repos]
+urls = [
+    "https://github.com/ghostty-org/ghostty",
+]
+
+# Add all repos from specified owners/orgs
+owners = [
+    "github.com/Snxwman",
+]
+
+# Create a group called "archive" with its own path, config, and repos
+[repos.archive]
+group_path = ".archive"
+urls = [
+    "github.com/bitcoin/bitcoin",
+    "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git",
+]
+
+["git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"]
+# Final format will be "{base_path}/{repos.archive.group_path}/{this.repo_path}"
+repo_path = "{host}/{user}/{repo}"
+scheme = "git"
+
+[repos.neovim]
+# Final format will be:
+#     "{base_path}/{repos.groups.group_path}/{repos.groups.neovim.group_path}/" if relative
+#     or "{repos.groups.neovim.group_path}" if absolute
+group_path = ".neovim"  # "~/src/.groups/neovim/{repo_path}"
+urls = [
+    "https://github.com/neovim/neovim",
+]
+
+["https://github.com/neovim/neovim"]
+repo_path_format = "{repo}"  # "~/src/.groups/neovim/neovim"
+
+[repos.neovim.plugins]
+group_path = "plugins"
+repo_path_format = "{owner}/{owner}-{repo}"  # "~/src/.groups/neovim/plugins/folke-lazy.nvim"
+urls = [
+    "https://github.com/folke/lazy.nvim",
+]
+
+[repos.lings]
+group_path = ".lings"
+urls = [
+    "https://codeberg.org/ziglings/exercises",
+]
+
