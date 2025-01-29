@@ -1,2 +1,2 @@
-# repo
+# repomgr
 Git repo manager
