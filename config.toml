@@ -8,13 +8,13 @@
 # App wide, base config. Can be overriden later
 [base]
 base_path = "~/repomgr"
-# Final format will be "{base_path}/{path_format}/"
+# Final format will be "{base_path}/{repo_path_format}/"
 # Permitted Values:
 #     {subdomain}
 #     {domain}
 #     {tld}
 #     {host}      - The domain name of the url including subdomains and tld.
-#     {ownder}    - The owner of the repo (defined as the second to last path component of the full url).
+#     {owner}    - The owner of the repo (defined as the second to last path component of the full url).
 #     {repo}      - The name of the repo (defines as the last path component of the full url, with out ".git").
 #     `text`      - Raw text will be used exactly.
 repo_path_format = "{host}/{owner}/{repo}"
@@ -27,6 +27,9 @@ stash_to_pull = false
 
 nerdfonts = true
 
+################################################################################
+################################################################################
+
 # List of repos to manage
 [repos]
 urls = [
@@ -38,6 +41,8 @@ owners = [
     "github.com/Snxwman",
 ]
 
+################################################################################
+
 # Create a group called "archive" with its own path, config, and repos
 [repos.archive]
 group_path = ".archive"
@@ -46,16 +51,19 @@ urls = [
     "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git",
 ]
 
+# Configure options for this repo only
 ["git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"]
-# Final format will be "{base_path}/{repos.archive.group_path}/{this.repo_path}"
-repo_path = "{host}/{user}/{repo}"
+# Final format will be "{base_path}/{repos.archive.group_path}/{repo_path_format}"
+repo_path_format = "{host}/{repo}"
 scheme = "git"
+
+################################################################################
 
 [repos.neovim]
 # Final format will be:
 #     "{base_path}/{repos.groups.group_path}/{repos.groups.neovim.group_path}/" if relative
 #     or "{repos.groups.neovim.group_path}" if absolute
-group_path = ".neovim"  # "~/src/.groups/neovim/{repo_path}"
+group_path = ".neovim"  # "~/src/.groups/neovim/{repo_path_format}"
 urls = [
     "https://github.com/neovim/neovim",
 ]
@@ -70,9 +78,14 @@ urls = [
     "https://github.com/folke/lazy.nvim",
 ]
 
+################################################################################
+
 [repos.lings]
 group_path = ".lings"
 urls = [
+    "https://github.com/rust-lang/rustlings",
     "https://codeberg.org/ziglings/exercises",
+    "https://github.com/mauricioabreu/golings",
+    "https://github.com/soypat/gopherlings",
 ]
 

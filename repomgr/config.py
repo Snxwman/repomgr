@@ -9,15 +9,26 @@ from tomlkit.items import Table
 
 from repomgr.cli import RepomgrCli
 
+# TODO:
+# - UserConfig
+# - Include files in repomgr.conf
+# - Options for pulling branches
+# - Options for pulling artifacts
+# - Options for archiving issues
+# - Options for archiving pull requests
+# - Options for archiving discussions
+# - Options for archiving forks
 
 class Config:
     home = os.environ["HOME"]
     xdg_config_home = os.environ["XDG_CONFIG_HOME"]
+
     default_paths = [
-        f'{xdg_config_home}/repo/repo.conf',
-        f'{xdg_config_home}/repo.conf',
-        f'{home}/.config/repo.conf',
-        f'{home}/repo.conf',
+        f'{xdg_config_home}/repomgr/repomgr.conf',
+        f'{xdg_config_home}/repomgr.conf',
+        f'{home}/.config/repomgr/repomgr.conf',
+        f'{home}/.config/repomgr.conf',
+        f'{home}/repomgr.conf',
         'config.toml'
     ]
 
@@ -30,6 +41,9 @@ class Config:
         'background_fetch': True,
         'background_pull': False,
         'stash_to_pull': False,
+        'log_file_path': '$XDG_DATA_HOME/repomgr.log',
+        'log_level': 'WARNING',
+        'state_file_path': '$XDG_DATA_HOME/repomgr.state',
         'nerdfonts': False,
     }
     users_table_defaults = []
@@ -42,6 +56,7 @@ class Config:
     repo_table_defaults = {
         'repo_name': '',
         'repo_path_format': '',
+        'scheme': '',
         'symlink_to': '',
         'on_pull': '',
     }
@@ -90,6 +105,14 @@ class Config:
             self.nerdfonts = raw_base_table['nerdfonts']
 
     class GroupConfig:
+        """The config for a group
+
+        Attributes:
+            group_path (str)
+            repo_path_format (str)
+            urls ([str])
+            owners ([str])
+        """
         def __init__(self, raw_group_table, group_key, parent_group_path):
             Config._warn_ignoring_unknown_keys(
                 group_key, 
@@ -129,9 +152,9 @@ class Config:
             self.owners = raw_group_table['owners']
 
     class RepoConfig:
-        def __init__(self, raw_repo_table):
+        def __init__(self, raw_repo_table, table_key):
             Config._warn_ignoring_unknown_keys(
-                '',
+                table_key,
                 Config.repo_table_defaults.keys(),
                 list(raw_repo_table.items())
             )
@@ -147,28 +170,63 @@ class Config:
         self.config_path = Config._find_config_file(cli.args.config_path)
         self.raw_config = self._read_config_file()
 
-        self.tables = Config._extract_table_keys(self.raw_config) 
+        # Contains all tables in the config file including base, repos, any repos.groups, and any single url repo tables.
+        self.tables = Config._extract_table_keys(self.raw_config)
         self._check_required_tables()
 
         self.base = self.BaseConfig(self.raw_config['base'])
-        self.repos = [] 
+        
+        self.all_repos = {}  # All repos for all groups
+        self.url_repos = {}  # Repos that have a unique config (repo url is the table key)
+        self.repos = {}      # Repos in the top level repos group
+        # Contains all repos groups, including the base 'repos' group
+        # Key is the repo group in dotted form, value is the GroupConfig object
         self.groups = {}
-        self._init_repos_groups()
+        self._init_repo_groups()
+        self._init_repos()
 
 
-    def _init_repos_groups(self):
-        repos_tables = [t for t in self.tables if t.startswith('repos')]
+    def get_repo_config(self, url):
+        ...
+        
+
+    def get_group_config(self, group_name):
+        ...
+
+
+    def write_config_file(self):
+        ...
+
+
+    def _get_url_repo_config_tables(self):
+        url_tables = {}
+
+        tables = (table for table in self.tables if table not in self.groups.keys() if table != 'base')
+
+        for url in tables:
+            url_tables[url] = self.raw_config[url]
+
+        return url_tables
+
+
+    def _init_repo_groups(self):
+        repos_tables = [table for table in self.tables if table.startswith('repos')]
 
         for group_key in repos_tables:
             if group_key == 'repos':
                 parent_group_path = self.base.base_path
             else:
-                parent_key = [k for k in group_key.split('.')][:-1]
+                parent_key = self._split_dotted_key(group_key)[:-1] 
                 parent_key = '.'.join(parent_key)
                 parent_group_path = self.groups[parent_key].group_path
 
             group_table = self._get_table_from_dotted_key(group_key)
             self.groups[group_key] = Config.GroupConfig(group_table, group_key, parent_group_path)
+
+    
+    def _init_repos(self):
+        for url, table in self._get_url_repo_config_tables().items():
+            self.repos[url] = Config.RepoConfig(table, url)
 
 
     def _split_dotted_key(self, key):
@@ -201,6 +259,14 @@ class Config:
 
         if missing_tables:
             sys.exit()
+
+
+    def _check_required_fields(self):
+        ...
+
+
+    def _check_valid_field_values(self):
+        ...
 
 
     @staticmethod
@@ -272,3 +338,7 @@ class Config:
         with open(self.config_path) as file:
             return tomlkit.load(file)
 
+
+    @staticmethod
+    def _get_default_config_file():
+        ...
